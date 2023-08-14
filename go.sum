@@ -7,6 +7,8 @@ github.com/consensys/gnark-crypto v0.11.0/go.mod h1:Iq/P3HHl0ElSjsg2E1gsMwhAyxnx
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/subcommands v1.2.0/go.mod h1:ZjhPrFU+Olkh9WazFPsl27BQ4UPiG37m3yTrtFlrHVk=
+github.com/ingonyama-zk/icicle v0.0.0-20230727080545-2f21ec4aa7f4 h1:rnIps6yGHbrvYCeQMMOW8dPWJ6707et2r1Ud5Olvl+4=
+github.com/ingonyama-zk/icicle v0.0.0-20230727080545-2f21ec4aa7f4/go.mod h1:kPvbQqCrBszFYe7cqctnvXVMHzGihiQsIAr/qP3TbNo=
 github.com/ingonyama-zk/icicle v0.0.0-20230803132311-74e377094687 h1:Fr0qZ5W5ehumTGEV65M+HXGHA9uSWAgQpKKMSZCwGr8=
 github.com/ingonyama-zk/icicle v0.0.0-20230803132311-74e377094687/go.mod h1:9JiPcJeIAUoVYrgVgBO6tVy6ZXIaPXZtz/y2Mvg6jbk=
 github.com/ingonyama-zk/icicle v0.0.0-20230806083752-8d217a0897c3 h1:gKXngP9slugoxXqmA2xrfh+3DE5LmZ6LGDU1ziwaCIE=
