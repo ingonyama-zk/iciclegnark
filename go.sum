@@ -13,6 +13,8 @@ github.com/ingonyama-zk/icicle v0.0.0-20230803132311-74e377094687 h1:Fr0qZ5W5ehu
 github.com/ingonyama-zk/icicle v0.0.0-20230803132311-74e377094687/go.mod h1:9JiPcJeIAUoVYrgVgBO6tVy6ZXIaPXZtz/y2Mvg6jbk=
 github.com/ingonyama-zk/icicle v0.0.0-20230806083752-8d217a0897c3 h1:gKXngP9slugoxXqmA2xrfh+3DE5LmZ6LGDU1ziwaCIE=
 github.com/ingonyama-zk/icicle v0.0.0-20230806083752-8d217a0897c3/go.mod h1:9JiPcJeIAUoVYrgVgBO6tVy6ZXIaPXZtz/y2Mvg6jbk=
+github.com/ingonyama-zk/icicle v0.0.0-20230814101556-a1d9fa66485c h1:2vgiOSdtjwQZE9p+EixnUFISdZv/VWH3xpRxGpFSFnU=
+github.com/ingonyama-zk/icicle v0.0.0-20230814101556-a1d9fa66485c/go.mod h1:9JiPcJeIAUoVYrgVgBO6tVy6ZXIaPXZtz/y2Mvg6jbk=
 github.com/leanovate/gopter v0.2.9 h1:fQjYxZaynp97ozCzfOyOuAGOU4aU/z37zf/tOujFk7c=
 github.com/mmcloughlin/addchain v0.4.0 h1:SobOdjm2xLj1KkXN5/n0xTIWyZA2+s99UCY1iPfkHRY=
 github.com/mmcloughlin/addchain v0.4.0/go.mod h1:A86O+tHqZLMNO4w6ZZ4FlVQEadcoqkyU72HC5wJ4RlU=
