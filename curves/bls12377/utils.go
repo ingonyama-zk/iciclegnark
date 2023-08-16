@@ -65,8 +65,8 @@ func FromG1AffineGnark(gnark *bls12377.G1Affine, p *icicle.G1ProjectivePoint) *i
 	var z icicle.G1BaseField
 	z.SetOne()
 
-	p.X = *NewFieldFromFpGnark[icicle.G1BaseField](gnark.X)
-	p.Y = *NewFieldFromFpGnark[icicle.G1BaseField](gnark.Y)
+	p.X = *NewFieldFromFpGnark(gnark.X)
+	p.Y = *NewFieldFromFpGnark(gnark.Y)
 	p.Z = z
 
 	return p
@@ -79,8 +79,8 @@ func G1ProjectivePointFromJacGnark(p *icicle.G1ProjectivePoint, gnark *bls12377.
 	var z icicle.G1BaseField
 	z.SetOne()
 
-	p.X = *NewFieldFromFpGnark[icicle.G1BaseField](pointAffine.X)
-	p.Y = *NewFieldFromFpGnark[icicle.G1BaseField](pointAffine.Y)
+	p.X = *NewFieldFromFpGnark(pointAffine.X)
+	p.Y = *NewFieldFromFpGnark(pointAffine.Y)
 	p.Z = z
 
 	return p
@@ -90,29 +90,29 @@ func AffineToGnarkAffine(p *icicle.G1PointAffine) *bls12377.G1Affine {
 	return ProjectiveToGnarkAffine(p.ToProjective())
 }
 
-func BatchConvertFromFrGnark[T icicle.G1BaseField | icicle.G1ScalarField](elements []fr.Element) []T {
-	var newElements []T
+func BatchConvertFromFrGnark(elements []fr.Element) []icicle.G1ScalarField {
+	var newElements []icicle.G1ScalarField
 	for _, e := range elements {
-		converted := NewFieldFromFrGnark[T](e)
+		converted := NewFieldFromFrGnark(e)
 		newElements = append(newElements, *converted)
 	}
 
 	return newElements
 }
 
-func BatchConvertFromFrGnarkThreaded[T icicle.G1BaseField | icicle.G1ScalarField](elements []fr.Element, routines int) []T {
-	var newElements []T
+func BatchConvertFromFrGnarkThreaded(elements []fr.Element, routines int) []icicle.G1ScalarField {
+	var newElements []icicle.G1ScalarField
 
 	if routines > 1 && routines <= len(elements) {
-		channels := make([]chan []T, routines)
+		channels := make([]chan []icicle.G1ScalarField, routines)
 		for i := 0; i < routines; i++ {
-			channels[i] = make(chan []T, 1)
+			channels[i] = make(chan []icicle.G1ScalarField, 1)
 		}
 
 		convert := func(elements []fr.Element, chanIndex int) {
-			var convertedElements []T
+			var convertedElements []icicle.G1ScalarField
 			for _, e := range elements {
-				converted := NewFieldFromFrGnark[T](e)
+				converted := NewFieldFromFrGnark(e)
 				convertedElements = append(convertedElements, *converted)
 			}
 
@@ -135,7 +135,7 @@ func BatchConvertFromFrGnarkThreaded[T icicle.G1BaseField | icicle.G1ScalarField
 		}
 	} else {
 		for _, e := range elements {
-			converted := NewFieldFromFrGnark[T](e)
+			converted := NewFieldFromFrGnark(e)
 			newElements = append(newElements, *converted)
 		}
 	}
@@ -250,16 +250,16 @@ func BatchConvertFromG1Affine(elements []bls12377.G1Affine) []icicle.G1PointAffi
 	return newElements
 }
 
-func NewFieldFromFrGnark[T icicle.G1BaseField | icicle.G1ScalarField](element fr.Element) *T {
-	s := icicle.ConvertUint64ArrToUint32Arr4(element.Bits()) // get non-montgomry
+func NewFieldFromFrGnark(element fr.Element) *icicle.G1ScalarField {
+	S := icicle.ConvertUint64ArrToUint32Arr4(element.Bits()) // get non-montgomry
 
-	return &T{s}
+	return &icicle.G1ScalarField{S}
 }
 
-func NewFieldFromFpGnark[T icicle.G1BaseField | icicle.G1ScalarField](element fp.Element) *T {
-	s := icicle.ConvertUint64ArrToUint32Arr6(element.Bits()) // get non-montgomry
+func NewFieldFromFpGnark(element fp.Element) *icicle.G1BaseField {
+	S := icicle.ConvertUint64ArrToUint32Arr6(element.Bits()) // get non-montgomry
 
-	return &T{s}
+	return &icicle.G1BaseField{S}
 }
 
 func BaseFieldToGnarkFr(f *icicle.G1BaseField) *fr.Element {

@@ -29,7 +29,7 @@ func TestFieldBN254FromGnark(t *testing.T) {
 	var rand fr.Element
 	rand.SetRandom()
 
-	f := NewFieldFromFrGnark[icicle.G1ScalarField](rand)
+	f := NewFieldFromFrGnark(rand)
 
 	assert.Equal(t, f.S, icicle.ConvertUint64ArrToUint32Arr4(rand.Bits()))
 }
@@ -42,7 +42,7 @@ func BenchmarkBatchConvertFromFrGnarkThreaded(b *testing.B) {
 	_, scalars_fr := GenerateScalars(1<<24, false)
 	b.Run(fmt.Sprintf("Convert %d", routineAmount), func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_ = BatchConvertFromFrGnarkThreaded[icicle.G1ScalarField](scalars_fr, routineAmount)
+			_ = BatchConvertFromFrGnarkThreaded(scalars_fr, routineAmount)
 		}
 	})
 	// }
@@ -52,7 +52,7 @@ func BenchmarkBatchConvertFromFrGnark(b *testing.B) {
 	_, scalars_fr := GenerateScalars(1<<24, false)
 	b.Run("BatchConvert 2^24", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_ = BatchConvertFromFrGnark[icicle.G1ScalarField](scalars_fr)
+			_ = BatchConvertFromFrGnark(scalars_fr)
 		}
 	})
 }
@@ -78,8 +78,8 @@ func TestPointBN254FromGnark(t *testing.T) {
 	x.Mul(&gnarkP.X, z_invsq)
 	y.Mul(&gnarkP.Y, z_invq3)
 
-	assert.Equal(t, p.X, *NewFieldFromFpGnark[icicle.G1BaseField](*x))
-	assert.Equal(t, p.Y, *NewFieldFromFpGnark[icicle.G1BaseField](*y))
+	assert.Equal(t, p.X, *NewFieldFromFpGnark(*x))
+	assert.Equal(t, p.Y, *NewFieldFromFpGnark(*y))
 	assert.Equal(t, p.Z, f)
 }
 

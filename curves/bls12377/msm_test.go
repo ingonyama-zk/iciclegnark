@@ -137,26 +137,26 @@ func GenerateScalars(count int, skewed bool) ([]icicle.G1ScalarField, []fr.Eleme
 	if skewed && count > 1_200_000 {
 		for i := 0; i < count-1_200_000; i++ {
 			rand.SetRandom()
-			s := NewFieldFromFrGnark[icicle.G1ScalarField](rand)
+			s := NewFieldFromFrGnark(rand)
 
 			scalars_fr = append(scalars_fr, rand)
 			scalars = append(scalars, *s)
 		}
 
 		for i := 0; i < 600_000; i++ {
-			s := NewFieldFromFrGnark[icicle.G1ScalarField](randLarge)
+			s := NewFieldFromFrGnark(randLarge)
 
 			scalars_fr = append(scalars_fr, randLarge)
 			scalars = append(scalars, *s)
 		}
 		for i := 0; i < 400_000; i++ {
-			s := NewFieldFromFrGnark[icicle.G1ScalarField](zero)
+			s := NewFieldFromFrGnark(zero)
 
 			scalars_fr = append(scalars_fr, zero)
 			scalars = append(scalars, *s)
 		}
 		for i := 0; i < 200_000; i++ {
-			s := NewFieldFromFrGnark[icicle.G1ScalarField](one)
+			s := NewFieldFromFrGnark(one)
 
 			scalars_fr = append(scalars_fr, one)
 			scalars = append(scalars, *s)
@@ -164,7 +164,7 @@ func GenerateScalars(count int, skewed bool) ([]icicle.G1ScalarField, []fr.Eleme
 	} else {
 		for i := 0; i < count; i++ {
 			rand.SetRandom()
-			s := NewFieldFromFrGnark[icicle.G1ScalarField](rand)
+			s := NewFieldFromFrGnark(rand)
 
 			scalars_fr = append(scalars_fr, rand)
 			scalars = append(scalars, *s)
@@ -181,7 +181,7 @@ func ReadGnarkScalarsFromFile(filePath string, size int) (scalars []icicle.G1Sca
 	scanner := bufio.NewScanner(file)
 	for i := 0; scanner.Scan(); i++ {
 		gnarkScalars[i].SetString(scanner.Text())
-		scalars[i] = *NewFieldFromFrGnark[icicle.G1ScalarField](gnarkScalars[i])
+		scalars[i] = *NewFieldFromFrGnark(gnarkScalars[i])
 	}
 	return
 }
