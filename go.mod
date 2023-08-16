@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/consensys/gnark-crypto v0.11.0
-	github.com/ingonyama-zk/icicle v0.0.0-20230814101556-a1d9fa66485c
+	github.com/ingonyama-zk/icicle v0.0.0-20230816133820-ad1e4822526b
 	github.com/stretchr/testify v1.8.3
 )
 
