@@ -233,14 +233,16 @@ TODO: the following functions are due to a bug in the cuda code,
 these fucntions should be deleted once cuda MsmG2 returns non montgomery format
 */
 const (
-	q0 uint64 = 4332616871279656263
-	q1 uint64 = 10917124144477883021
-	q2 uint64 = 13281191951274694749
-	q3 uint64 = 3486998266802970665
+	q0 uint64 = 9586122913090633729
+	q1 uint64 = 1660523435060625408
+	q2 uint64 = 2230234197602682880
+	q3 uint64 = 1883307231910630287
+	q4 uint64 = 14284016967150029115
+	q5 uint64 = 121098312706494698
 )
 
 func smallerThanModulus(z fp.Element) bool {
-	return (z[3] < q3 || (z[3] == q3 && (z[2] < q2 || (z[2] == q2 && (z[1] < q1 || (z[1] == q1 && (z[0] < q0)))))))
+	return (z[5] < q5 || (z[5] == q5 && (z[4] < q4 || (z[4] == q4 && (z[3] < q3 || (z[3] == q3 && (z[2] < q2 || (z[2] == q2 && (z[1] < q1 || (z[1] == q1 && (z[0] < q0)))))))))))
 }
 
 func ElementWithOutConvertingToMontgomery(b *[48]byte) (fp.Element, error) {
