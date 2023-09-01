@@ -159,10 +159,10 @@ func G2PointAffineFromGnarkJac(gnark *bls12377.G2Jac, g *icicle.G2PointAffine) *
 
 func ToGnarkFp(f *icicle.G2Element) *fp.Element {
 	fb := f.ToBytesLe()
-	var b32 [32]byte
-	copy(b32[:], fb[:32])
+	var b48 [48]byte
+	copy(b48[:], fb[:48])
 
-	v, e := ElementWithOutConvertingToMontgomery(&b32) // cuda returns montgomery format
+	v, e := ElementWithOutConvertingToMontgomery(&b48) // cuda returns montgomery format
 	//v2, e := fp.LittleEndian.Element(&b32) // TODO: revert back to this once cuda code is fixed.
 
 	if e != nil {
@@ -243,12 +243,14 @@ func smallerThanModulus(z fp.Element) bool {
 	return (z[3] < q3 || (z[3] == q3 && (z[2] < q2 || (z[2] == q2 && (z[1] < q1 || (z[1] == q1 && (z[0] < q0)))))))
 }
 
-func ElementWithOutConvertingToMontgomery(b *[32]byte) (fp.Element, error) {
+func ElementWithOutConvertingToMontgomery(b *[48]byte) (fp.Element, error) {
 	var z fp.Element
 	z[0] = binary.LittleEndian.Uint64((*b)[0:8])
 	z[1] = binary.LittleEndian.Uint64((*b)[8:16])
 	z[2] = binary.LittleEndian.Uint64((*b)[16:24])
 	z[3] = binary.LittleEndian.Uint64((*b)[24:32])
+	z[4] = binary.LittleEndian.Uint64((*b)[32:40])
+	z[5] = binary.LittleEndian.Uint64((*b)[40:48])
 
 	if !smallerThanModulus(z) {
 		return fp.Element{}, errors.New("invalid fp.Element encoding")
