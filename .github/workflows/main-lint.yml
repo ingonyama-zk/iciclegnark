@@ -1,0 +1,16 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  formatting-golang:
+    name: Check Golang Code Formatting
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Check gofmt
+      run: if [[ $(go list ./... | xargs go fmt) ]]; then echo "Please run go fmt"; exit 1; fi
