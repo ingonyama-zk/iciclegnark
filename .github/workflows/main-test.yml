@@ -21,6 +21,11 @@ jobs:
         git clone https://github.com/username/another-repo.git
         cd another-repo/goicicle
         make all
+        cd ~/go/pkg/mod/github.com/ingonyama-zk/icicle@v0.0.0-20230817090824-e04bd928e658/goicicle
+        chmod +x setup.sh
+
+        echo "Compiling all ICICLE curves..."
+        make all
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/goicicle" >> $GITHUB_ENV
     - name: Run Golang Tests
       run: |
