@@ -15,8 +15,8 @@ import (
 )
 
 type OnDeviceData struct {
-	p    unsafe.Pointer
-	size int
+	P    unsafe.Pointer
+	Size int
 }
 
 func INttOnDevice(scalars_d, twiddles_d, cosetPowers_d unsafe.Pointer, size, sizeBytes int, isCoset bool) unsafe.Pointer {
@@ -35,8 +35,6 @@ func NttOnDevice(scalars_out, scalars_d, twiddles_d, coset_powers_d unsafe.Point
 	}
 
 	icicle.ReverseScalars(scalars_out, size)
-
-	return
 }
 
 func MsmOnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (curve.G1Jac, unsafe.Pointer, error) {
@@ -84,8 +82,6 @@ func PolyOps(a_d, b_d, c_d, den_d unsafe.Pointer, size int) {
 	if ret != 0 {
 		fmt.Print("Vector mult a*den issue")
 	}
-
-	return
 }
 
 func MontConvOnDevice(scalars_d unsafe.Pointer, size int, is_into bool) {
@@ -94,8 +90,6 @@ func MontConvOnDevice(scalars_d unsafe.Pointer, size int, is_into bool) {
 	} else {
 		icicle.FromMontgomery(scalars_d, size)
 	}
-
-	return
 }
 
 func CopyToDevice(scalars []fr.Element, bytes int, copyDone chan unsafe.Pointer) {
