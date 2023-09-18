@@ -2,12 +2,39 @@ package bn254
 
 import (
 	"fmt"
+	"unsafe"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
+	goicicle "github.com/ingonyama-zk/icicle/goicicle"
 )
+
+func CopyPointsToDevice(points []bn254.G1Affine, pointsBytes int, copyDone chan unsafe.Pointer) {
+	if pointsBytes == 0 {
+		copyDone <- nil
+	} else {
+		devicePtr, _ := goicicle.CudaMalloc(pointsBytes)
+		iciclePoints := BatchConvertFromG1Affine(points)
+		goicicle.CudaMemCpyHtoD[icicle.G1PointAffine](devicePtr, iciclePoints, pointsBytes)
+		
+		copyDone <- devicePtr
+	}
+}
+
+func CopyG2PointsToDevice(points []bn254.G2Affine, pointsBytes int, copyDone chan unsafe.Pointer) {
+	if pointsBytes == 0 {
+		copyDone <- nil
+	} else {
+		devicePtr, _ := goicicle.CudaMalloc(pointsBytes)
+		iciclePoints := BatchConvertFromG2Affine(points)
+		goicicle.CudaMemCpyHtoD[icicle.G2PointAffine](devicePtr, iciclePoints, pointsBytes)
+		
+		copyDone <- devicePtr
+	}
+}
+
 
 func ScalarToGnarkFr(f *icicle.G1ScalarField) *fr.Element {
 	fb := f.ToBytesLe()
