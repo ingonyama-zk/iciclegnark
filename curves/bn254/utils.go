@@ -11,6 +11,14 @@ import (
 	goicicle "github.com/ingonyama-zk/icicle/goicicle"
 )
 
+func CopyToDevice(scalars []fr.Element, bytes int, copyDone chan unsafe.Pointer) {
+	devicePtr, _ := goicicle.CudaMalloc(bytes)
+	goicicle.CudaMemCpyHtoD[fr.Element](devicePtr, scalars, bytes)
+	MontConvOnDevice(devicePtr, len(scalars), false)
+
+	copyDone <- devicePtr
+}
+
 func CopyPointsToDevice(points []bn254.G1Affine, pointsBytes int, copyDone chan unsafe.Pointer) {
 	if pointsBytes == 0 {
 		copyDone <- nil
@@ -35,6 +43,9 @@ func CopyG2PointsToDevice(points []bn254.G2Affine, pointsBytes int, copyDone cha
 	}
 }
 
+func FreeDevicePointer(ptr unsafe.Pointer) {
+	goicicle.CudaFree(ptr)
+}
 
 func ScalarToGnarkFr(f *icicle.G1ScalarField) *fr.Element {
 	fb := f.ToBytesLe()
@@ -62,59 +73,6 @@ func ScalarToGnarkFp(f *icicle.G1ScalarField) *fp.Element {
 	}
 
 	return &v
-}
-
-func ProjectiveToGnarkAffine(p *icicle.G1ProjectivePoint) *bn254.G1Affine {
-	px := BaseFieldToGnarkFp(&p.X)
-	py := BaseFieldToGnarkFp(&p.Y)
-	pz := BaseFieldToGnarkFp(&p.Z)
-
-	zInv := new(fp.Element)
-	x := new(fp.Element)
-	y := new(fp.Element)
-
-	zInv.Inverse(pz)
-
-	x.Mul(px, zInv)
-	y.Mul(py, zInv)
-
-	return &bn254.G1Affine{X: *x, Y: *y}
-}
-
-func G1ProjectivePointToGnarkJac(p *icicle.G1ProjectivePoint) *bn254.G1Jac {
-	var p1 bn254.G1Jac
-	p1.FromAffine(ProjectiveToGnarkAffine(p))
-
-	return &p1
-}
-
-func FromG1AffineGnark(gnark *bn254.G1Affine, p *icicle.G1ProjectivePoint) *icicle.G1ProjectivePoint {
-	var z icicle.G1BaseField
-	z.SetOne()
-
-	p.X = *NewFieldFromFpGnark[icicle.G1BaseField](gnark.X)
-	p.Y = *NewFieldFromFpGnark[icicle.G1BaseField](gnark.Y)
-	p.Z = z
-
-	return p
-}
-
-func G1ProjectivePointFromJacGnark(p *icicle.G1ProjectivePoint, gnark *bn254.G1Jac) *icicle.G1ProjectivePoint {
-	var pointAffine bn254.G1Affine
-	pointAffine.FromJacobian(gnark)
-
-	var z icicle.G1BaseField
-	z.SetOne()
-
-	p.X = *NewFieldFromFpGnark[icicle.G1BaseField](pointAffine.X)
-	p.Y = *NewFieldFromFpGnark[icicle.G1BaseField](pointAffine.Y)
-	p.Z = z
-
-	return p
-}
-
-func AffineToGnarkAffine(p *icicle.G1PointAffine) *bn254.G1Affine {
-	return ProjectiveToGnarkAffine(p.ToProjective())
 }
 
 func BatchConvertFromFrGnark[T icicle.G1BaseField | icicle.G1ScalarField](elements []fr.Element) []T {
@@ -266,27 +224,16 @@ func BatchConvertG1ScalarFieldToFrGnarkThreaded(elements []icicle.G1ScalarField,
 	return newElements
 }
 
-func BatchConvertFromG1Affine(elements []bn254.G1Affine) []icicle.G1PointAffine {
-	var newElements []icicle.G1PointAffine
-	for _, e := range elements {
-		var newElement icicle.G1ProjectivePoint
-		FromG1AffineGnark(&e, &newElement)
-
-		newElements = append(newElements, *newElement.StripZ())
-	}
-	return newElements
-}
-
 func NewFieldFromFrGnark[T icicle.G1BaseField | icicle.G1ScalarField](element fr.Element) *T {
 	s := icicle.ConvertUint64ArrToUint32Arr(element.Bits()) // get non-montgomry
 
-	return &T{s}
+	return &T{S: s}
 }
 
 func NewFieldFromFpGnark[T icicle.G1BaseField | icicle.G1ScalarField](element fp.Element) *T {
 	s := icicle.ConvertUint64ArrToUint32Arr(element.Bits()) // get non-montgomry
 
-	return &T{s}
+	return &T{S: s}
 }
 
 func BaseFieldToGnarkFr(f *icicle.G1BaseField) *fr.Element {
@@ -297,7 +244,7 @@ func BaseFieldToGnarkFr(f *icicle.G1BaseField) *fr.Element {
 	v, e := fr.LittleEndian.Element(&b32)
 
 	if e != nil {
-		panic(fmt.Sprintf("unable to create convert point %v got error %v", f, e))
+		panic(fmt.Sprintf("unable to convert point %v got error %v", f, e))
 	}
 
 	return &v
@@ -311,7 +258,7 @@ func BaseFieldToGnarkFp(f *icicle.G1BaseField) *fp.Element {
 	v, e := fp.LittleEndian.Element(&b32)
 
 	if e != nil {
-		panic(fmt.Sprintf("unable to create convert point %v got error %v", f, e))
+		panic(fmt.Sprintf("unable to convert point %v got error %v", f, e))
 	}
 
 	return &v
