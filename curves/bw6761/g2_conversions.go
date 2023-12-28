@@ -7,7 +7,7 @@ import (
 	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bw6761"
 )
 
-func ToGnarkE2(f *icicle.G2Element) *fp.Element {
+func ToGnarkFp(f *icicle.G2Element) *fp.Element {
 	fb := f.ToBytesLe()
 	var b96 [96]byte
 	copy(b96[:], fb[:96])
@@ -22,9 +22,9 @@ func ToGnarkE2(f *icicle.G2Element) *fp.Element {
 }
 
 func G2PointToGnarkJac(p *icicle.G2Point) *bw6761.G2Jac {
-	x := ToGnarkE2(&p.X)
-	y := ToGnarkE2(&p.Y)
-	z := ToGnarkE2(&p.Z)
+	x := ToGnarkFp(&p.X)
+	y := ToGnarkFp(&p.Y)
+	z := ToGnarkFp(&p.Z)
 	var zSquared fp.Element
 	zSquared.Mul(z, z)
 
@@ -69,50 +69,5 @@ func BatchConvertFromG2Affine(elements []bw6761.G2Affine) []icicle.G2PointAffine
 
 		newElements = append(newElements, newElement)
 	}
-	return newElements
-}
-
-func BatchConvertFromG2AffineThreads(elements []bw6761.G2Affine, routines int) []icicle.G2PointAffine {
-	var newElements []icicle.G2PointAffine
-
-	if routines > 1 && routines <= len(elements) {
-		channels := make([]chan []icicle.G2PointAffine, routines)
-		for i := 0; i < routines; i++ {
-			channels[i] = make(chan []icicle.G2PointAffine, 1)
-		}
-
-		convert := func(elements []bw6761.G2Affine, chanIndex int) {
-			var convertedElements []icicle.G2PointAffine
-			for _, e := range elements {
-				var converted icicle.G2PointAffine
-				G2AffineFromGnarkAffine(&e, &converted)
-				convertedElements = append(convertedElements, converted)
-			}
-
-			channels[chanIndex] <- convertedElements
-		}
-
-		batchLen := len(elements) / routines
-		for i := 0; i < routines; i++ {
-			start := batchLen * i
-			end := batchLen * (i + 1)
-			elemsToConv := elements[start:end]
-			if i == routines-1 {
-				elemsToConv = elements[start:]
-			}
-			go convert(elemsToConv, i)
-		}
-
-		for i := 0; i < routines; i++ {
-			newElements = append(newElements, <-channels[i]...)
-		}
-	} else {
-		for _, e := range elements {
-			var converted icicle.G2PointAffine
-			G2AffineFromGnarkAffine(&e, &converted)
-			newElements = append(newElements, converted)
-		}
-	}
-
 	return newElements
 }
