@@ -7,7 +7,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bw6-761"
 	"github.com/consensys/gnark-crypto/ecc/bw6-761/fp"
-	goicicle "github.com/ingonyama-zk/icicle/goicicle"
+	"github.com/ingonyama-zk/icicle/goicicle"
 	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bw6761"
 )
 

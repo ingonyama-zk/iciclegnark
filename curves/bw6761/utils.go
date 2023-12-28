@@ -199,10 +199,10 @@ func BaseFieldToGnarkFr(f *icicle.G1BaseField) *fr.Element {
 
 func BaseFieldToGnarkFp(f *icicle.G1BaseField) *fp.Element {
 	fb := f.ToBytesLe()
-	var b32 [96]byte
-	copy(b32[:], fb[:96])
+	var b96 [96]byte
+	copy(b96[:], fb[:96])
 
-	v, e := fp.LittleEndian.Element(&b32)
+	v, e := fp.LittleEndian.Element(&b96)
 
 	if e != nil {
 		panic(fmt.Sprintf("unable to convert point %v got error %v", f, e))
