@@ -420,7 +420,9 @@ func TestMsmG2bls12377(t *testing.T) {
 
 		G2AffineFromGnarkAffine(gResult, &result)
 
-		pp := result.ToProjective()
+		var pp icicle.G2Point
+		pp.FromAffine(&result)
+
 		assert.True(t, out.Eq(&pp))
 	}
 }
@@ -484,7 +486,9 @@ func TestCommitG2MSM(t *testing.T) {
 		var resultGnark icicle.G2PointAffine
 		G2AffineFromGnarkAffine(gResult, &resultGnark)
 
-		resultGnarkProjective := resultGnark.ToProjective()
+		var resultGnarkProjective icicle.G2Point
+		resultGnarkProjective.FromAffine(&resultGnark)
+
 		assert.Equal(t, len(outHost), 1)
 		result := outHost[0]
 

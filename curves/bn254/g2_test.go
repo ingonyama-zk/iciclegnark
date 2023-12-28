@@ -29,7 +29,10 @@ func TestToGnarkJacG2(t *testing.T) {
 
 	var pointAffine icicle.G2PointAffine
 	G2PointAffineFromGnarkJac(&gnark, &pointAffine)
-	pointProjective := pointAffine.ToProjective()
+
+	var pointProjective icicle.G2Point
+	pointProjective.FromAffine(&pointAffine)
+
 	fmt.Printf("%+v\n", pointProjective)
 	backToGnark := G2PointToGnarkJac(&pointProjective)
 
