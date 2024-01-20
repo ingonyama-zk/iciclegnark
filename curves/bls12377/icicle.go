@@ -5,7 +5,7 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/consensys/gnark-crypto/ecc/bls12-377"
+	bls12377 "github.com/consensys/gnark-crypto/ecc/bls12-377"
 	"github.com/consensys/gnark-crypto/ecc/bls12-377/fp"
 	goicicle "github.com/ingonyama-zk/icicle/goicicle"
 	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bls12377"
@@ -16,12 +16,10 @@ type OnDeviceData struct {
 	Size int
 }
 
-func INttOnDevice(scalars_d, twiddles_d, cosetPowers_d unsafe.Pointer, size, sizeBytes int, isCoset bool) unsafe.Pointer {
+func INttOnDevice(scalars_d, twiddles_d, cosetPowers_d unsafe.Pointer, size, sizeBytes int, isCoset bool) {
 	ReverseScalars(scalars_d, size)
 
-	scalarsInterp := icicle.Interpolate(scalars_d, twiddles_d, cosetPowers_d, size, isCoset)
-
-	return scalarsInterp
+	icicle.Interpolate(scalars_d, twiddles_d, cosetPowers_d, size, isCoset)
 }
 
 func NttOnDevice(scalars_out, scalars_d, twiddles_d, coset_powers_d unsafe.Pointer, size, twid_size, size_bytes int, isCoset bool) {
@@ -35,7 +33,7 @@ func NttOnDevice(scalars_out, scalars_d, twiddles_d, coset_powers_d unsafe.Point
 }
 
 func MsmOnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (bls12377.G1Jac, unsafe.Pointer, error) {
-	pointBytes := fp.Bytes * 3  // 3 Elements because of 3 coordinates
+	pointBytes := fp.Bytes * 3 // 3 Elements because of 3 coordinates
 	out_d, _ := goicicle.CudaMalloc(pointBytes)
 
 	icicle.Commit(out_d, scalars_d, points_d, count, 10)
@@ -51,7 +49,7 @@ func MsmOnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (b
 }
 
 func MsmG2OnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (bls12377.G2Jac, unsafe.Pointer, error) {
-	pointBytes := fp.Bytes * 6  // 6 Elements because of 3 coordinates each with real and imaginary elements
+	pointBytes := fp.Bytes * 6 // 6 Elements because of 3 coordinates each with real and imaginary elements
 	out_d, _ := goicicle.CudaMalloc(pointBytes)
 
 	icicle.CommitG2(out_d, scalars_d, points_d, count, 10)
@@ -74,7 +72,7 @@ func ReverseScalars(ptr unsafe.Pointer, size int) error {
 	if success, err := icicle.ReverseScalars(ptr, size); success != 0 {
 		return err
 	}
-	
+
 	return nil
 }
 

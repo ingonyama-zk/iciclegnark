@@ -7,8 +7,8 @@ import (
 	bls12377 "github.com/consensys/gnark-crypto/ecc/bls12-377"
 	"github.com/consensys/gnark-crypto/ecc/bls12-377/fp"
 	"github.com/consensys/gnark-crypto/ecc/bls12-377/fr"
-	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bls12377"
 	goicicle "github.com/ingonyama-zk/icicle/goicicle"
+	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bls12377"
 )
 
 func CopyToDevice(scalars []fr.Element, bytes int, copyDone chan unsafe.Pointer) {
@@ -26,7 +26,7 @@ func CopyPointsToDevice(points []bls12377.G1Affine, pointsBytes int, copyDone ch
 		devicePtr, _ := goicicle.CudaMalloc(pointsBytes)
 		iciclePoints := BatchConvertFromG1Affine(points)
 		goicicle.CudaMemCpyHtoD[icicle.G1PointAffine](devicePtr, iciclePoints, pointsBytes)
-		
+
 		copyDone <- devicePtr
 	}
 }
@@ -38,7 +38,7 @@ func CopyG2PointsToDevice(points []bls12377.G2Affine, pointsBytes int, copyDone 
 		devicePtr, _ := goicicle.CudaMalloc(pointsBytes)
 		iciclePoints := BatchConvertFromG2Affine(points)
 		goicicle.CudaMemCpyHtoD[icicle.G2PointAffine](devicePtr, iciclePoints, pointsBytes)
-		
+
 		copyDone <- devicePtr
 	}
 }

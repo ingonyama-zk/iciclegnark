@@ -1,10 +1,10 @@
 package bls12377
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bls12-377"
 	"github.com/consensys/gnark-crypto/ecc/bls12-377/fp"
 	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bls12377"
-	"fmt"
 )
 
 func ToGnarkFp(f *icicle.G2Element) *fp.Element {
