@@ -35,7 +35,7 @@ func NttOnDevice(scalars_out, scalars_d, twiddles_d, coset_powers_d unsafe.Point
 }
 
 func MsmOnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (bn254.G1Jac, unsafe.Pointer, error) {
-	pointBytes := fp.Bytes * 3  // 3 Elements because of 3 coordinates
+	pointBytes := fp.Bytes * 3 // 3 Elements because of 3 coordinates
 	out_d, _ := goicicle.CudaMalloc(pointBytes)
 
 	icicle.Commit(out_d, scalars_d, points_d, count, 10)
@@ -51,7 +51,7 @@ func MsmOnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (b
 }
 
 func MsmG2OnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (bn254.G2Jac, unsafe.Pointer, error) {
-	pointBytes := fp.Bytes * 6  // 6 Elements because of 3 coordinates each with real and imaginary elements
+	pointBytes := fp.Bytes * 6 // 6 Elements because of 3 coordinates each with real and imaginary elements
 	out_d, _ := goicicle.CudaMalloc(pointBytes)
 
 	icicle.CommitG2(out_d, scalars_d, points_d, count, 10)
@@ -74,7 +74,7 @@ func ReverseScalars(ptr unsafe.Pointer, size int) error {
 	if success, err := icicle.ReverseScalars(ptr, size); success != 0 {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -101,5 +101,13 @@ func MontConvOnDevice(scalars_d unsafe.Pointer, size int, is_into bool) {
 		icicle.ToMontgomery(scalars_d, size)
 	} else {
 		icicle.FromMontgomery(scalars_d, size)
+	}
+}
+
+func VecMulOnDevice(scalars_a, scalars_d unsafe.Pointer, size int) {
+	ret := icicle.VecScalarMulMod(scalars_a, scalars_d, size)
+
+	if ret != 0 {
+		fmt.Print("Vector mul issue")
 	}
 }
