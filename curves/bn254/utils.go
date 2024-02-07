@@ -7,8 +7,8 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
 	goicicle "github.com/ingonyama-zk/icicle/goicicle"
+	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
 )
 
 func CopyToDevice(scalars []fr.Element, bytes int, copyDone chan unsafe.Pointer) {
@@ -26,9 +26,20 @@ func CopyPointsToDevice(points []bn254.G1Affine, pointsBytes int, copyDone chan 
 		devicePtr, _ := goicicle.CudaMalloc(pointsBytes)
 		iciclePoints := BatchConvertFromG1Affine(points)
 		goicicle.CudaMemCpyHtoD[icicle.G1PointAffine](devicePtr, iciclePoints, pointsBytes)
-		
+
 		copyDone <- devicePtr
 	}
+}
+
+func CopyScalarsToHost(a_device unsafe.Pointer, n int, sizeBytes int) []fr.Element {
+	outHost := make([]fr.Element, n)
+
+	ret := goicicle.CudaMemCpyDtoH[fr.Element](outHost, a_device, sizeBytes)
+	if ret != 0 {
+		fmt.Print("Memory copy error")
+	}
+
+	return outHost
 }
 
 func CopyG2PointsToDevice(points []bn254.G2Affine, pointsBytes int, copyDone chan unsafe.Pointer) {
@@ -38,7 +49,7 @@ func CopyG2PointsToDevice(points []bn254.G2Affine, pointsBytes int, copyDone cha
 		devicePtr, _ := goicicle.CudaMalloc(pointsBytes)
 		iciclePoints := BatchConvertFromG2Affine(points)
 		goicicle.CudaMemCpyHtoD[icicle.G2PointAffine](devicePtr, iciclePoints, pointsBytes)
-		
+
 		copyDone <- devicePtr
 	}
 }
