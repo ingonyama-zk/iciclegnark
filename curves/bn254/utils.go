@@ -9,7 +9,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	goicicle "github.com/ingonyama-zk/icicle/goicicle"
 	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
-	"golang.org/x/sync/errgroup"
 )
 
 func CopyToDevice(scalars []fr.Element, bytes int, copyDone chan unsafe.Pointer) {
@@ -32,19 +31,13 @@ func CopyPointsToDevice(points []bn254.G1Affine, pointsBytes int, copyDone chan 
 	}
 }
 
-// TODO find better way to handle
 func CopyScalarsToHost(a_device unsafe.Pointer, n int, sizeBytes int) []fr.Element {
 	outHost := make([]fr.Element, n)
 
-	G := new(errgroup.Group)
-	G.Go(func() (err error) {
-		ret := goicicle.CudaMemCpyDtoH[fr.Element](outHost, a_device, sizeBytes)
-		if ret != 0 {
-			err = fmt.Errorf("Memory copy error")
-		}
-		return
-	})
-	G.Wait()
+	ret := goicicle.CudaMemCpyDtoH[fr.Element](outHost, a_device, sizeBytes)
+	if ret != 0 {
+		fmt.Print("Memory copy error")
+	}
 
 	return outHost
 }
