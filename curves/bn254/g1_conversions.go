@@ -3,21 +3,28 @@ package bn254
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
-	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
+	icicle_bn254 "github.com/ingonyama-zk/icicle/wrappers/golang/curves/bn254"
 )
 
-func BatchConvertFromG1Affine(elements []bn254.G1Affine) []icicle.G1PointAffine {
-	var newElements []icicle.G1PointAffine
+func StripZ(p *icicle_bn254.Projective) *icicle_bn254.Affine {
+	return &icicle_bn254.Affine{
+		X: p.X,
+		Y: p.Y,
+	}
+}
+
+func BatchConvertFromG1Affine(elements []bn254.G1Affine) []icicle_bn254.Affine {
+	var newElements []icicle_bn254.Affine
 	for _, e := range elements {
-		var newElement icicle.G1ProjectivePoint
+		var newElement icicle_bn254.Projective
 		FromG1AffineGnark(&e, &newElement)
 
-		newElements = append(newElements, *newElement.StripZ())
+		newElements = append(newElements, *StripZ(&newElement))
 	}
 	return newElements
 }
 
-func ProjectiveToGnarkAffine(p *icicle.G1ProjectivePoint) *bn254.G1Affine {
+func ProjectiveToGnarkAffine(p *icicle_bn254.Projective) *bn254.G1Affine {
 	px := BaseFieldToGnarkFp(&p.X)
 	py := BaseFieldToGnarkFp(&p.Y)
 	pz := BaseFieldToGnarkFp(&p.Z)
@@ -34,38 +41,39 @@ func ProjectiveToGnarkAffine(p *icicle.G1ProjectivePoint) *bn254.G1Affine {
 	return &bn254.G1Affine{X: *x, Y: *y}
 }
 
-func G1ProjectivePointToGnarkJac(p *icicle.G1ProjectivePoint) *bn254.G1Jac {
+func G1ProjectivePointToGnarkJac(p *icicle_bn254.Projective) *bn254.G1Jac {
 	var p1 bn254.G1Jac
 	p1.FromAffine(ProjectiveToGnarkAffine(p))
 
 	return &p1
 }
 
-func FromG1AffineGnark(gnark *bn254.G1Affine, p *icicle.G1ProjectivePoint) *icicle.G1ProjectivePoint {
-	var z icicle.G1BaseField
-	z.SetOne()
+func FromG1AffineGnark(gnark *bn254.G1Affine, p *icicle_bn254.Projective) *icicle_bn254.Projective {
+	var z icicle_bn254.BaseField
+	z.One()
 
-	p.X = *NewFieldFromFpGnark[icicle.G1BaseField](gnark.X)
-	p.Y = *NewFieldFromFpGnark[icicle.G1BaseField](gnark.Y)
+	p.X = *NewFieldFromFpGnark[icicle_bn254.BaseField](gnark.X)
+	p.Y = *NewFieldFromFpGnark[icicle_bn254.BaseField](gnark.Y)
 	p.Z = z
 
 	return p
 }
 
-func G1ProjectivePointFromJacGnark(p *icicle.G1ProjectivePoint, gnark *bn254.G1Jac) *icicle.G1ProjectivePoint {
+func G1ProjectivePointFromJacGnark(p *icicle_bn254.Projective, gnark *bn254.G1Jac) *icicle_bn254.Projective {
 	var pointAffine bn254.G1Affine
 	pointAffine.FromJacobian(gnark)
 
-	var z icicle.G1BaseField
-	z.SetOne()
+	var z icicle_bn254.BaseField
+	z.One()
 
-	p.X = *NewFieldFromFpGnark[icicle.G1BaseField](pointAffine.X)
-	p.Y = *NewFieldFromFpGnark[icicle.G1BaseField](pointAffine.Y)
+	p.X = *NewFieldFromFpGnark[icicle_bn254.BaseField](pointAffine.X)
+	p.Y = *NewFieldFromFpGnark[icicle_bn254.BaseField](pointAffine.Y)
 	p.Z = z
 
 	return p
 }
 
-func AffineToGnarkAffine(p *icicle.G1PointAffine) *bn254.G1Affine {
-	return ProjectiveToGnarkAffine(p.ToProjective())
+func AffineToGnarkAffine(p *icicle_bn254.Affine) *bn254.G1Affine {
+	pointProjective := p.ToProjective()
+	return ProjectiveToGnarkAffine(&pointProjective)
 }

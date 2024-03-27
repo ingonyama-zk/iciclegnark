@@ -1,14 +1,18 @@
+//go:build g2
+
 package bn254
 
 import (
+	"fmt"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
-	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
-	"fmt"
+	"github.com/ingonyama-zk/icicle/wrappers/golang/core"
+	icicle_bn254 "github.com/ingonyama-zk/icicle/wrappers/golang/curves/bn254"
 )
 
-func ToGnarkFp(f *icicle.G2Element) *fp.Element {
-	fb := f.ToBytesLe()
+func ToGnarkFp(f *icicle_bn254.G2BaseField) *fp.Element {
+	fb := f.ToBytesLittleEndian()
 	var b32 [32]byte
 	copy(b32[:], fb[:32])
 
@@ -21,14 +25,29 @@ func ToGnarkFp(f *icicle.G2Element) *fp.Element {
 	return &v
 }
 
-func ToGnarkE2(f *icicle.ExtentionField) bn254.E2 {
+func ToGnarkE2(f *icicle_bn254.G2BaseField) bn254.E2 {
+	bytes := f.ToBytesLittleEndian()
+	a0, _ := fp.LittleEndian.Element((*[fp.Bytes]byte)(bytes[:f.Len()/2]))
+	a1, _ := fp.LittleEndian.Element((*[fp.Bytes]byte)(bytes[f.Len()/2:]))
 	return bn254.E2{
-		A0: *ToGnarkFp(&f.A0),
-		A1: *ToGnarkFp(&f.A1),
+		A0: a0,
+		A1: a1,
 	}
 }
 
-func G2PointToGnarkJac(p *icicle.G2Point) *bn254.G2Jac {
+func GnarkE2Bits(f *bn254.E2) []uint64 {
+	a0 := f.A0.Bits()
+	a1 := f.A1.Bits()
+	return append(a0[:], a1[:]...)
+}
+
+func FromGnarkE2(f *bn254.E2) icicle_bn254.G2BaseField {
+	var field icicle_bn254.G2BaseField
+	field.FromLimbs(core.ConvertUint64ArrToUint32Arr(GnarkE2Bits(f)))
+	return field
+}
+
+func G2PointToGnarkJac(p *icicle_bn254.G2Projective) *bn254.G2Jac {
 	x := ToGnarkE2(&p.X)
 	y := ToGnarkE2(&p.Y)
 	z := ToGnarkE2(&p.Z)
@@ -50,31 +69,29 @@ func G2PointToGnarkJac(p *icicle.G2Point) *bn254.G2Jac {
 	return &after
 }
 
-func G2AffineFromGnarkAffine(gnark *bn254.G2Affine, g *icicle.G2PointAffine) *icicle.G2PointAffine {
-	g.X.A0 = gnark.X.A0.Bits()
-	g.X.A1 = gnark.X.A1.Bits()
-	g.Y.A0 = gnark.Y.A0.Bits()
-	g.Y.A1 = gnark.Y.A1.Bits()
+func G2PointToGnarkAffine(p *icicle_bn254.G2Projective) *bn254.G2Affine {
+	var affine bn254.G2Affine
+	affine.FromJacobian(G2PointToGnarkJac(p))
+	return &affine
+}
 
+func G2AffineFromGnarkAffine(gnark *bn254.G2Affine, g *icicle_bn254.G2Affine) *icicle_bn254.G2Affine {
+	g.X = FromGnarkE2(&gnark.X)
+	g.Y = FromGnarkE2(&gnark.Y)
 	return g
 }
 
-func G2PointAffineFromGnarkJac(gnark *bn254.G2Jac, g *icicle.G2PointAffine) *icicle.G2PointAffine {
+func G2PointAffineFromGnarkJac(gnark *bn254.G2Jac, g *icicle_bn254.G2Affine) *icicle_bn254.G2Affine {
 	var pointAffine bn254.G2Affine
 	pointAffine.FromJacobian(gnark)
 
-	g.X.A0 = pointAffine.X.A0.Bits()
-	g.X.A1 = pointAffine.X.A1.Bits()
-	g.Y.A0 = pointAffine.Y.A0.Bits()
-	g.Y.A1 = pointAffine.Y.A1.Bits()
-
-	return g
+	return G2AffineFromGnarkAffine(&pointAffine, g)
 }
 
-func BatchConvertFromG2Affine(elements []bn254.G2Affine) []icicle.G2PointAffine {
-	var newElements []icicle.G2PointAffine
+func BatchConvertFromG2Affine(elements []bn254.G2Affine) []icicle_bn254.G2Affine {
+	var newElements []icicle_bn254.G2Affine
 	for _, gg2Affine := range elements {
-		var newElement icicle.G2PointAffine
+		var newElement icicle_bn254.G2Affine
 		G2AffineFromGnarkAffine(&gg2Affine, &newElement)
 
 		newElements = append(newElements, newElement)
@@ -82,19 +99,19 @@ func BatchConvertFromG2Affine(elements []bn254.G2Affine) []icicle.G2PointAffine 
 	return newElements
 }
 
-func BatchConvertFromG2AffineThreaded(elements []bn254.G2Affine, routines int) []icicle.G2PointAffine {
-	var newElements []icicle.G2PointAffine
+func BatchConvertFromG2AffineThreaded(elements []bn254.G2Affine, routines int) []icicle_bn254.G2Affine {
+	var newElements []icicle_bn254.G2Affine
 
 	if routines > 1 && routines <= len(elements) {
-		channels := make([]chan []icicle.G2PointAffine, routines)
+		channels := make([]chan []icicle_bn254.G2Affine, routines)
 		for i := 0; i < routines; i++ {
-			channels[i] = make(chan []icicle.G2PointAffine, 1)
+			channels[i] = make(chan []icicle_bn254.G2Affine, 1)
 		}
 
 		convert := func(elements []bn254.G2Affine, chanIndex int) {
-			var convertedElements []icicle.G2PointAffine
+			var convertedElements []icicle_bn254.G2Affine
 			for _, e := range elements {
-				var converted icicle.G2PointAffine
+				var converted icicle_bn254.G2Affine
 				G2AffineFromGnarkAffine(&e, &converted)
 				convertedElements = append(convertedElements, converted)
 			}
@@ -118,7 +135,7 @@ func BatchConvertFromG2AffineThreaded(elements []bn254.G2Affine, routines int) [
 		}
 	} else {
 		for _, e := range elements {
-			var converted icicle.G2PointAffine
+			var converted icicle_bn254.G2Affine
 			G2AffineFromGnarkAffine(&e, &converted)
 			newElements = append(newElements, converted)
 		}

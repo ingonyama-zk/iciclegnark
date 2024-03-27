@@ -23,16 +23,17 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/stretchr/testify/assert"
-	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
+	core "github.com/ingonyama-zk/icicle/wrappers/golang/core"
+	icicle_bn254 "github.com/ingonyama-zk/icicle/wrappers/golang/curves/bn254"
 )
 
 func TestFieldBN254FromGnark(t *testing.T) {
 	var rand fr.Element
 	rand.SetRandom()
 
-	f := NewFieldFromFrGnark[icicle.G1ScalarField](rand)
-
-	assert.Equal(t, f.S, icicle.ConvertUint64ArrToUint32Arr(rand.Bits()))
+	f := NewFieldFromFrGnark[icicle_bn254.ScalarField](rand)
+	element_bits := rand.Bits()
+	assert.Equal(t, f.GetLimbs(), core.ConvertUint64ArrToUint32Arr(element_bits[:]))
 }
 
 func BenchmarkBatchConvertFromFrGnarkThreaded(b *testing.B) {
@@ -43,7 +44,7 @@ func BenchmarkBatchConvertFromFrGnarkThreaded(b *testing.B) {
 	_, scalars_fr := GenerateScalars(1 << 24, false)
 	b.Run(fmt.Sprintf("Convert %d", routineAmount), func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_ = BatchConvertFromFrGnarkThreaded[icicle.G1ScalarField](scalars_fr, routineAmount)
+			_ = BatchConvertFromFrGnarkThreaded[icicle_bn254.ScalarField](scalars_fr, routineAmount)
 		}
 	})
 	// }
@@ -53,7 +54,7 @@ func BenchmarkBatchConvertFromFrGnark(b *testing.B) {
 	_, scalars_fr := GenerateScalars(1 << 24, false)
 	b.Run("BatchConvert 2^24", func(b *testing.B) {
 		for n := 0; n < b.N; n++ {
-			_ = BatchConvertFromFrGnark[icicle.G1ScalarField](scalars_fr)
+			_ = BatchConvertFromFrGnark[icicle_bn254.ScalarField](scalars_fr)
 		}
 	})
 }
@@ -61,9 +62,9 @@ func BenchmarkBatchConvertFromFrGnark(b *testing.B) {
 func TestPointBN254FromGnark(t *testing.T) {
 	gnarkP, _ := randG1Jac()
 
-	var f icicle.G1BaseField
-	f.SetOne()
-	var p icicle.G1ProjectivePoint
+	var f icicle_bn254.BaseField
+	f.One()
+	var p icicle_bn254.Projective
 	G1ProjectivePointFromJacGnark(&p,&gnarkP)
 
 	z_inv := new(fp.Element)
@@ -79,18 +80,18 @@ func TestPointBN254FromGnark(t *testing.T) {
 	x.Mul(&gnarkP.X, z_invsq)
 	y.Mul(&gnarkP.Y, z_invq3)
 
-	assert.Equal(t, p.X, *NewFieldFromFpGnark[icicle.G1BaseField](*x))
-	assert.Equal(t, p.Y, *NewFieldFromFpGnark[icicle.G1BaseField](*y))
+	assert.Equal(t, p.X, *NewFieldFromFpGnark[icicle_bn254.BaseField](*x))
+	assert.Equal(t, p.Y, *NewFieldFromFpGnark[icicle_bn254.BaseField](*y))
 	assert.Equal(t, p.Z, f)
 }
 
 func TestPointAffineNoInfinityBN254ToProjective(t *testing.T) {
 	gnarkP, _ := randG1Jac()
-	var f icicle.G1BaseField
-	var p icicle.G1ProjectivePoint
+	var f icicle_bn254.BaseField
+	var p icicle_bn254.Projective
 	
-	f.SetOne()
-	affine := G1ProjectivePointFromJacGnark(&p,&gnarkP).StripZ()
+	f.One()
+	affine := StripZ(G1ProjectivePointFromJacGnark(&p,&gnarkP))
 	proj := affine.ToProjective()
 
 	assert.Equal(t, proj.X, affine.X)
@@ -100,7 +101,7 @@ func TestPointAffineNoInfinityBN254ToProjective(t *testing.T) {
 
 func TestToGnarkAffine(t *testing.T) {
 	gJac, _ := randG1Jac()
-	var proj icicle.G1ProjectivePoint
+	var proj icicle_bn254.Projective
 	G1ProjectivePointFromJacGnark(&proj, &gJac)
 
 	var gAffine bn254.G1Affine

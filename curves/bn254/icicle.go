@@ -1,14 +1,7 @@
 package bn254
 
 import (
-	"fmt"
-	"math"
 	"unsafe"
-
-	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
-	goicicle "github.com/ingonyama-zk/icicle/goicicle"
-	icicle "github.com/ingonyama-zk/icicle/goicicle/curves/bn254"
 )
 
 type OnDeviceData struct {
@@ -16,90 +9,81 @@ type OnDeviceData struct {
 	Size int
 }
 
-func INttOnDevice(scalars_d, twiddles_d, cosetPowers_d unsafe.Pointer, size, sizeBytes int, isCoset bool) unsafe.Pointer {
-	ReverseScalars(scalars_d, size)
+// func INttOnDevice(scalars_d, twiddles_d, cosetPowers_d unsafe.Pointer, size, sizeBytes int, isCoset bool) unsafe.Pointer {
+// 	ReverseScalars(scalars_d, size)
 
-	scalarsInterp := icicle.Interpolate(scalars_d, twiddles_d, cosetPowers_d, size, isCoset)
+// 	scalarsInterp := icicle_bn254.Interpolate(scalars_d, twiddles_d, cosetPowers_d, size, isCoset)
 
-	return scalarsInterp
-}
+// 	return scalarsInterp
+// }
 
-func NttOnDevice(scalars_out, scalars_d, twiddles_d, coset_powers_d unsafe.Pointer, size, twid_size, size_bytes int, isCoset bool) {
-	res := icicle.Evaluate(scalars_out, scalars_d, twiddles_d, coset_powers_d, size, twid_size, isCoset)
+// func NttOnDevice(scalars_out, scalars_d, twiddles_d, coset_powers_d unsafe.Pointer, size, twid_size, size_bytes int, isCoset bool) {
+// 	res := icicle_bn254.Ntt(scalars_out, scalars_d, twiddles_d, coset_powers_d, size, twid_size, isCoset)
 
-	if res != 0 {
-		fmt.Print("Issue evaluating")
-	}
+// 	if res.IcicleErrorCode != core.IcicleErrorCode(0) {
+// 		fmt.Print("Issue evaluating")
+// 	}
 
-	ReverseScalars(scalars_out, size)
-}
+// 	ReverseScalars(scalars_out, size)
+// }
 
-func MsmOnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (bn254.G1Jac, unsafe.Pointer, error) {
-	pointBytes := fp.Bytes * 3  // 3 Elements because of 3 coordinates
-	out_d, _ := goicicle.CudaMalloc(pointBytes)
+// func MsmOnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (bn254.G1Jac, unsafe.Pointer, error) {
+// 	var p icicle_bn254.Projective
+// 	var out_d core.DeviceSlice
+// 	_, e := out_d.Malloc(p.Size(), p.Size())
+// 	if e != cr.CudaSuccess {
+// 		return bn254.G1Jac{}, nil, errors.New("Allocation error")
+// 	}
 
-	icicle.Commit(out_d, scalars_d, points_d, count, 10)
+// 	icicle_bn254.Msm((s))
 
-	if convert {
-		outHost := make([]icicle.G1ProjectivePoint, 1)
-		goicicle.CudaMemCpyDtoH[icicle.G1ProjectivePoint](outHost, out_d, pointBytes)
+// 	icicle_bn254.Msm(out_d, scalars_d, points_d, count, 10)
 
-		return *G1ProjectivePointToGnarkJac(&outHost[0]), nil, nil
-	}
+// 	if convert {
+// 		outHost := make([]icicle_bn254.Projective, 1)
+// 		cr.CopyFromDevice(outHost, out_d, uint(pointBytes))
 
-	return bn254.G1Jac{}, out_d, nil
-}
+// 		return *G1ProjectivePointToGnarkJac(&outHost[0]), nil, nil
+// 	}
 
-func MsmG2OnDevice(scalars_d, points_d unsafe.Pointer, count int, convert bool) (bn254.G2Jac, unsafe.Pointer, error) {
-	pointBytes := fp.Bytes * 6  // 6 Elements because of 3 coordinates each with real and imaginary elements
-	out_d, _ := goicicle.CudaMalloc(pointBytes)
+// 	return bn254.G1Jac{}, out_d, nil
+// }
 
-	icicle.CommitG2(out_d, scalars_d, points_d, count, 10)
+// func GenerateTwiddleFactors(size int, inverse bool) (unsafe.Pointer, error) {
+// 	om_selector := int(math.Log(float64(size)) / math.Log(2))
+// 	return icicle_bn254.GenerateTwiddles(size, om_selector, inverse)
+// }
 
-	if convert {
-		outHost := make([]icicle.G2Point, 1)
-		goicicle.CudaMemCpyDtoH[icicle.G2Point](outHost, out_d, pointBytes)
-		return *G2PointToGnarkJac(&outHost[0]), nil, nil
-	}
+// func ReverseScalars(ptr unsafe.Pointer, size int) error {
+// 	if success, err := icicle_bn254.ReverseScalars(ptr, size); success != 0 {
+// 		return err
+// 	}
 
-	return bn254.G2Jac{}, out_d, nil
-}
+// 	return nil
+// }
 
-func GenerateTwiddleFactors(size int, inverse bool) (unsafe.Pointer, error) {
-	om_selector := int(math.Log(float64(size)) / math.Log(2))
-	return icicle.GenerateTwiddles(size, om_selector, inverse)
-}
+// func PolyOps(a_d, b_d, c_d, den_d unsafe.Pointer, size int) {
+// 	ret := icicle_bn254.VecScalarMulMod(a_d, b_d, size)
 
-func ReverseScalars(ptr unsafe.Pointer, size int) error {
-	if success, err := icicle.ReverseScalars(ptr, size); success != 0 {
-		return err
-	}
-	
-	return nil
-}
+// 	if ret != 0 {
+// 		fmt.Print("Vector mult a*b issue")
+// 	}
+// 	ret = icicle_bn254.VecScalarSub(a_d, c_d, size)
 
-func PolyOps(a_d, b_d, c_d, den_d unsafe.Pointer, size int) {
-	ret := icicle.VecScalarMulMod(a_d, b_d, size)
+// 	if ret != 0 {
+// 		fmt.Print("Vector sub issue")
+// 	}
+// 	ret = icicle_bn254.VecScalarMulMod(a_d, den_d, size)
 
-	if ret != 0 {
-		fmt.Print("Vector mult a*b issue")
-	}
-	ret = icicle.VecScalarSub(a_d, c_d, size)
+// 	if ret != 0 {
+// 		fmt.Print("Vector mult a*den issue")
+// 	}
+// }
 
-	if ret != 0 {
-		fmt.Print("Vector sub issue")
-	}
-	ret = icicle.VecScalarMulMod(a_d, den_d, size)
-
-	if ret != 0 {
-		fmt.Print("Vector mult a*den issue")
-	}
-}
-
-func MontConvOnDevice(scalars_d unsafe.Pointer, size int, is_into bool) {
-	if is_into {
-		icicle.ToMontgomery(scalars_d, size)
-	} else {
-		icicle.FromMontgomery(scalars_d, size)
-	}
-}
+// func MontConvOnDevice(scalars_d unsafe.Pointer, size int, is_into bool) {
+// 	if is_into {
+// 		icicle_bn254.ToMontgomery(scalars_d, size)
+// 	} else {
+// 		icicle_bn254.FromMontgomery(scalars_d, size)
+// 	}
+// }
